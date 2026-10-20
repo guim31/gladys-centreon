@@ -31,16 +31,22 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
+index.js                          SDK wiring only: src/app.js registers the handlers before connect()
+src/app.js                        every SDK handler -> the hub (also used by the tests)
+src/hub.js                        reading timer, states (changes + heartbeat), scene events, views
+src/devices.js                    host and "Centreon" devices, feature names (4 languages), values
+src/centreon/client.js            REST API v2: login/token, version, hosts, host groups, services, acknowledge
+src/centreon/http.js              node:http/https requests (a self-signed certificate accepted on request)
 src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+src/widgets.js                    dashboard widget `problems` (manifest `widgets`)
+src/texts.js                      connection, error, report, action texts (4 languages)
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
-gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
+src/store.js                      /data/centreon-state.json (the problems already seen)
+src/logs.js                       repeated failures logged once, then once when they heal
+gladys-assistant-integration.json manifest: name, config_schema, actions, triggers, widget...
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (en and fr mandatory)
 test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+                                  and helpers/fakeCentreon.js (real answers in test/fixtures/centreon)
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -70,8 +76,9 @@ test/                             node --test, against the SDK's fake Gladys (in
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+- **User-facing text** exists in English, French, German and Spanish: action
+  messages, widget, feature names, manifest texts, and `docs/{en,fr,de,es}.md`
+  with the same sections. `test/i18n.test.js` checks them.
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 
@@ -233,3 +240,56 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Centreon (propre à ce dépôt)
+
+Logique reprise au plus près de gladys-icinga (hub, événements, widget, actions, tests) : seuls
+l'API, l'identité des hôtes et leurs pièges changent.
+
+- **API** : REST v2, `http(s)://<hôte>/centreon/api/latest`. `POST /login` avec
+  `{"security":{"credentials":{"login","password"}}}` rend `security.token`, envoyé dans
+  `X-AUTH-TOKEN`. Le jeton est gardé en mémoire et réutilisé ; un 401 « Invalid credentials. »
+  (session expirée, Centreon redémarré) relance un seul login. Adresse : `http://` et `/centreon`
+  ajoutés s'ils manquent (installation par défaut de Centreon) ; tout ce qui précède `/api/` est
+  le chemin de l'interface ; une page copiée du navigateur garde son premier segment.
+- **Identité** : un hôte est clé par son **id Centreon** (`external_id` `…:host:<id>`, le
+  `name` du hub vaut l'id en texte, `alias` le nom Centreon affiché). Un renommage dans Centreon
+  garde l'appareil. Un service est clé par son id (acquittement par
+  `hosts/<id>/services/<id>`).
+- **Champs** (vus en réel, 24.10.12) : hôte `state` 0 UP, 1 DOWN, 2 UNREACHABLE, **4 PENDING**
+  (avec `checked: false`) ; `state_type` 0 SOFT / 1 HARD ; `acknowledged` (booléen) **mais
+  `is_acknowledged` pour un service** ; `scheduled_downtime_depth` ; `last_state_change` en ISO
+  8601, **`null`** si l'état n'a jamais changé ; `output` terminé par `\n` (seule la première
+  ligne est gardée). `display_name` vaut le nom ; `alias` est la description longue (non
+  affichée). Un service vérifié sur un hôte PENDING compte (il a un vrai état).
+- **Recherche** : `search={"service.state":{"$in":[1,2,3]}}` (les PENDING 4 exclus).
+  **Piège** : une `search` que Centreon ne sait pas lire est **ignorée en silence** (tous les
+  services, OK compris) : le faux de test refuse toute autre recherche. `host_group.name` n'est pas
+  un critère accepté sur `monitoring/hosts` (500 « The parameter … is not allowed ») ;
+  `host_group.id` l'est. Pages : `limit=1000`, `page` jusqu'à `meta.total`.
+- **Groupes d'hôtes** : `monitoring/hostgroups?show_host=true`. **Piège payé** : un utilisateur
+  non admin dont la ressource ACL donne les hôtes mais pas les groupes voit **une liste vide** :
+  erreur `no_groups` plutôt qu'un périmètre vide (tous les problèmes se seraient « résolus »).
+- **Droits** : sans « Reach API Realtime », le login **réussit** puis tout `monitoring/*` répond
+  403 « You are not authorized to access this resource » (`permission`). Sans ressource ACL :
+  liste d'hôtes vide (`no_hosts`, données gardées). Sans l'action ACL d'acquittement : **401 au
+  corps vide** sur le POST, juste après un login réussi : traité en `permission`, pas en mot de
+  passe refusé. `platform/versions` répond sans droit particulier.
+- **Acquittement** : `is_sticky`, `is_persistent_comment`, `is_notify_contacts: false`,
+  `with_services: false` pour l'hôte (ses services sont acquittés un par un, ceux pas encore
+  acquittés) ; tous les champs sont **obligatoires** (500 sinon). Réponse **204** même pour un
+  hôte UP ou un service OK (le moteur l'ignore) : le compte rendu compte les requêtes acceptées.
+  Hôte ou service inconnu : 404 « Host not found » / « Service not found ». Les acquittements et
+  maintenances passent par **Gorgone** : Gorgone arrêté, l'API répond 204 et rien n'arrive au
+  moteur (vu sur l'image de test, où il est désactivé).
+
+## Vérifié sur un vrai Centreon (20/10/2026)
+
+Image communautaire `yelfoss/centreon:24.10` (Centreon 24.10.12 tout en un, l'assistant
+d'installation web n'y est pas fait : déroulé en ligne de commande, mot de passe root MariaDB
+réinitialisé, Gorgone démarré à la main), retaguée `gladys-test-centreon-server`, réseau en pont
+`gladys-test-centreon`, aucun port publié. Hôtes et services créés par CLAPI, checks pilotés par
+fichiers (`max_check_attempts` 2, et 5 pour garder un SOFT), `behindhost` enfant de `deadhost`
+(UNREACHABLE), maintenance sur `outside` avec ses services, `newhost` sans check actif (PENDING).
+Utilisateurs non admin : complet, sans action d'acquittement, sans « Reach API Realtime », sans
+ressource ACL. Réponses gardées dans `test/fixtures/centreon/centreon-24.10.12.json`.

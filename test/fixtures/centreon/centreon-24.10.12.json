@@ -1,0 +1,581 @@
+{
+  "_comment": "Real answers of Centreon 24.10.12 (community all-in-one image, web installer run by hand), 20/10/2026, read by a dedicated non-admin user. Test hosts and addresses are invented (192.0.2.x, 198.51.100.x); the token is replaced; the widget versions are removed.",
+  "login": {
+    "request": "POST /login (dedicated user, right password)",
+    "status": 200,
+    "response": {
+      "contact": {
+        "id": 19,
+        "name": "gladys",
+        "alias": "gladys",
+        "email": "gladys@example.com",
+        "is_admin": false
+      },
+      "security": {
+        "token": "TEST-TOKEN-0000000000000000"
+      }
+    }
+  },
+  "login_refused": {
+    "request": "POST /login (wrong password)",
+    "status": 401,
+    "response": {
+      "code": 401,
+      "message": "Authentication failed"
+    }
+  },
+  "versions": {
+    "request": "GET /platform/versions",
+    "status": 200,
+    "response": {
+      "web": {
+        "version": "24.10.12",
+        "major": "24",
+        "minor": "10",
+        "fix": "12"
+      },
+      "modules": {},
+      "widgets": {}
+    }
+  },
+  "hosts": {
+    "request": "GET /monitoring/hosts?limit=1000&page=1",
+    "status": 200,
+    "response": {
+      "result": [
+        {
+          "id": 8,
+          "poller_id": 1,
+          "name": "behindhost",
+          "acknowledged": false,
+          "address_ip": "192.0.2.12",
+          "alias": "Behind the old server",
+          "check_attempt": 2,
+          "checked": true,
+          "display_name": "behindhost",
+          "execution_time": 0.15118,
+          "icon_image": "",
+          "icon_image_alt": "",
+          "last_check": "2026-10-20T16:04:14+00:00",
+          "last_hard_state_change": "2026-10-20T16:04:18+00:00",
+          "last_state_change": "2026-10-20T16:04:18+00:00",
+          "last_time_down": "2026-10-20T16:03:18+00:00",
+          "last_time_unreachable": "2026-10-20T16:04:18+00:00",
+          "last_time_up": null,
+          "last_update": "2026-10-20T16:02:38+00:00",
+          "max_check_attempts": 2,
+          "output": "CRITICAL - host unreachable\n",
+          "passive_checks": true,
+          "state": 2,
+          "state_type": 1,
+          "timezone": "",
+          "scheduled_downtime_depth": 0,
+          "criticality": null
+        },
+        {
+          "id": 7,
+          "poller_id": 1,
+          "name": "deadhost",
+          "acknowledged": false,
+          "address_ip": "192.0.2.11",
+          "alias": "Old server",
+          "check_attempt": 1,
+          "checked": true,
+          "display_name": "deadhost",
+          "execution_time": 0.157379,
+          "icon_image": "",
+          "icon_image_alt": "",
+          "last_check": "2026-10-20T16:04:26+00:00",
+          "last_hard_state_change": "2026-10-20T16:03:28+00:00",
+          "last_state_change": "2026-10-20T16:03:23+00:00",
+          "last_time_down": "2026-10-20T16:04:28+00:00",
+          "last_time_unreachable": null,
+          "last_time_up": null,
+          "last_update": "2026-10-20T16:02:38+00:00",
+          "max_check_attempts": 2,
+          "output": "CRITICAL - host unreachable\n",
+          "passive_checks": true,
+          "state": 1,
+          "state_type": 1,
+          "timezone": "",
+          "scheduled_downtime_depth": 0,
+          "criticality": null
+        },
+        {
+          "id": 11,
+          "poller_id": 1,
+          "name": "nas",
+          "acknowledged": false,
+          "address_ip": "192.0.2.10",
+          "alias": "NAS",
+          "check_attempt": 1,
+          "checked": true,
+          "display_name": "nas",
+          "execution_time": 0.127292,
+          "icon_image": "",
+          "icon_image_alt": "",
+          "last_check": "2026-10-20T16:04:38+00:00",
+          "last_hard_state_change": "2026-10-20T15:54:50+00:00",
+          "last_state_change": "2026-10-20T15:54:50+00:00",
+          "last_time_down": null,
+          "last_time_unreachable": null,
+          "last_time_up": "2026-10-20T16:04:43+00:00",
+          "last_update": "2026-10-20T16:02:38+00:00",
+          "max_check_attempts": 2,
+          "output": "OK - test\n",
+          "passive_checks": true,
+          "state": 0,
+          "state_type": 1,
+          "timezone": "",
+          "scheduled_downtime_depth": 0,
+          "criticality": null
+        },
+        {
+          "id": 12,
+          "poller_id": 1,
+          "name": "newhost",
+          "acknowledged": false,
+          "address_ip": "192.0.2.13",
+          "alias": "New host",
+          "check_attempt": 1,
+          "checked": false,
+          "display_name": "newhost",
+          "execution_time": 0.0,
+          "icon_image": "",
+          "icon_image_alt": "",
+          "last_check": null,
+          "last_hard_state_change": null,
+          "last_state_change": null,
+          "last_time_down": null,
+          "last_time_unreachable": null,
+          "last_time_up": null,
+          "last_update": "2026-10-20T16:02:38+00:00",
+          "max_check_attempts": 2,
+          "output": "",
+          "passive_checks": true,
+          "state": 4,
+          "state_type": 1,
+          "timezone": "",
+          "scheduled_downtime_depth": 0,
+          "criticality": null
+        },
+        {
+          "id": 10,
+          "poller_id": 1,
+          "name": "outside",
+          "acknowledged": false,
+          "address_ip": "198.51.100.7",
+          "alias": "Outside",
+          "check_attempt": 1,
+          "checked": true,
+          "display_name": "outside",
+          "execution_time": 0.130634,
+          "icon_image": "",
+          "icon_image_alt": "",
+          "last_check": "2026-10-20T16:04:50+00:00",
+          "last_hard_state_change": "2026-10-20T16:03:53+00:00",
+          "last_state_change": "2026-10-20T16:02:53+00:00",
+          "last_time_down": "2026-10-20T16:04:53+00:00",
+          "last_time_unreachable": null,
+          "last_time_up": null,
+          "last_update": "2026-10-20T16:02:38+00:00",
+          "max_check_attempts": 2,
+          "output": "CRITICAL - host unreachable\n",
+          "passive_checks": true,
+          "state": 1,
+          "state_type": 1,
+          "timezone": "",
+          "scheduled_downtime_depth": 1,
+          "criticality": null
+        },
+        {
+          "id": 9,
+          "poller_id": 1,
+          "name": "router",
+          "acknowledged": false,
+          "address_ip": "192.0.2.1",
+          "alias": "Router",
+          "check_attempt": 1,
+          "checked": true,
+          "display_name": "router",
+          "execution_time": 0.137801,
+          "icon_image": "",
+          "icon_image_alt": "",
+          "last_check": "2026-10-20T16:05:02+00:00",
+          "last_hard_state_change": "2026-10-20T16:02:24+00:00",
+          "last_state_change": "2026-10-20T16:02:24+00:00",
+          "last_time_down": "2026-10-20T16:01:39+00:00",
+          "last_time_unreachable": null,
+          "last_time_up": "2026-10-20T16:05:03+00:00",
+          "last_update": "2026-10-20T16:02:38+00:00",
+          "max_check_attempts": 2,
+          "output": "OK - test\n",
+          "passive_checks": true,
+          "state": 0,
+          "state_type": 1,
+          "timezone": "",
+          "scheduled_downtime_depth": 0,
+          "criticality": null
+        }
+      ],
+      "meta": {
+        "page": 1,
+        "limit": 1000,
+        "search": {},
+        "sort_by": {},
+        "total": 6
+      }
+    }
+  },
+  "hostgroups": {
+    "request": "GET /monitoring/hostgroups?show_host=true&limit=1000&page=1 (ACL resource with the host groups)",
+    "status": 200,
+    "response": {
+      "result": [
+        {
+          "id": 3,
+          "hosts": [
+            {
+              "id": 11,
+              "name": "nas",
+              "alias": "NAS",
+              "display_name": "nas",
+              "state": 0
+            },
+            {
+              "id": 12,
+              "name": "newhost",
+              "alias": "New host",
+              "display_name": "newhost",
+              "state": 4
+            },
+            {
+              "id": 9,
+              "name": "router",
+              "alias": "Router",
+              "display_name": "router",
+              "state": 0
+            }
+          ],
+          "name": "homelab"
+        },
+        {
+          "id": 4,
+          "hosts": [
+            {
+              "id": 8,
+              "name": "behindhost",
+              "alias": "Behind the old server",
+              "display_name": "behindhost",
+              "state": 2
+            },
+            {
+              "id": 7,
+              "name": "deadhost",
+              "alias": "Old server",
+              "display_name": "deadhost",
+              "state": 1
+            },
+            {
+              "id": 9,
+              "name": "router",
+              "alias": "Router",
+              "display_name": "router",
+              "state": 0
+            }
+          ],
+          "name": "office"
+        }
+      ],
+      "meta": {
+        "page": 1,
+        "limit": 1000,
+        "search": {},
+        "sort_by": {},
+        "total": 2
+      }
+    }
+  },
+  "hostgroups_no_acl": {
+    "request": "GET /monitoring/hostgroups?show_host=true (ACL resource with the hosts, without host groups)",
+    "status": 200,
+    "response": {
+      "result": [],
+      "meta": {
+        "page": 1,
+        "limit": 1000,
+        "search": {},
+        "sort_by": {},
+        "total": 0
+      }
+    }
+  },
+  "services": {
+    "request": "GET /monitoring/services?search={\"service.state\":{\"$in\":[1,2,3]}}&limit=1000&page=1",
+    "status": 200,
+    "response": {
+      "result": [
+        {
+          "duration": "1m 16s",
+          "id": 14,
+          "check_attempt": "1",
+          "description": "ping",
+          "display_name": "ping",
+          "host": {
+            "id": 8,
+            "name": "behindhost",
+            "alias": "Behind the old server",
+            "display_name": "behindhost",
+            "state": 2
+          },
+          "icon_image": "",
+          "icon_image_alt": "",
+          "is_acknowledged": false,
+          "scheduled_downtime_depth": 0,
+          "last_check": "2026-10-20T16:05:00+00:00",
+          "last_state_change": "2026-10-20T16:04:00+00:00",
+          "max_check_attempts": 2,
+          "output": "CRITICAL - Host Unreachable (192.0.2.12)\n",
+          "state": 2,
+          "state_type": 1,
+          "criticality": null,
+          "status": {
+            "code": 2,
+            "name": "CRITICAL",
+            "severity_code": 1
+          }
+        },
+        {
+          "duration": "2m 1s",
+          "id": 12,
+          "check_attempt": "2",
+          "description": "backup",
+          "display_name": "backup",
+          "host": {
+            "id": 11,
+            "name": "nas",
+            "alias": "NAS",
+            "display_name": "nas",
+            "state": 0
+          },
+          "icon_image": "",
+          "icon_image_alt": "",
+          "is_acknowledged": false,
+          "scheduled_downtime_depth": 0,
+          "last_check": "2026-10-20T16:04:15+00:00",
+          "last_state_change": "2026-10-20T16:03:15+00:00",
+          "max_check_attempts": 2,
+          "output": "CRITICAL - last backup 26 hours ago\n",
+          "state": 2,
+          "state_type": 1,
+          "criticality": null,
+          "status": {
+            "code": 2,
+            "name": "CRITICAL",
+            "severity_code": 1
+          }
+        },
+        {
+          "duration": "1m 53s",
+          "id": 10,
+          "check_attempt": "2",
+          "description": "disk",
+          "display_name": "disk",
+          "host": {
+            "id": 11,
+            "name": "nas",
+            "alias": "NAS",
+            "display_name": "nas",
+            "state": 0
+          },
+          "icon_image": "",
+          "icon_image_alt": "",
+          "is_acknowledged": true,
+          "scheduled_downtime_depth": 0,
+          "last_check": "2026-10-20T16:04:23+00:00",
+          "last_state_change": "2026-10-20T16:03:23+00:00",
+          "max_check_attempts": 2,
+          "output": "DISK WARNING - free space: /volume1 12% (inode=97%)\n",
+          "state": 1,
+          "state_type": 1,
+          "criticality": null,
+          "status": {
+            "code": 1,
+            "name": "WARNING",
+            "severity_code": 2
+          }
+        },
+        {
+          "duration": "1m 31s",
+          "id": 11,
+          "check_attempt": "2",
+          "description": "temperature",
+          "display_name": "temperature",
+          "host": {
+            "id": 11,
+            "name": "nas",
+            "alias": "NAS",
+            "display_name": "nas",
+            "state": 0
+          },
+          "icon_image": "",
+          "icon_image_alt": "",
+          "is_acknowledged": false,
+          "scheduled_downtime_depth": 0,
+          "last_check": "2026-10-20T16:04:45+00:00",
+          "last_state_change": "2026-10-20T16:03:45+00:00",
+          "max_check_attempts": 2,
+          "output": "UNKNOWN - temperature sensor did not answer\n",
+          "state": 3,
+          "state_type": 1,
+          "criticality": null,
+          "status": {
+            "code": 3,
+            "name": "UNKNOWN",
+            "severity_code": 3
+          }
+        },
+        {
+          "duration": "2m 8s",
+          "id": 17,
+          "check_attempt": "1",
+          "description": "load",
+          "display_name": "load",
+          "host": {
+            "id": 12,
+            "name": "newhost",
+            "alias": "New host",
+            "display_name": "newhost",
+            "state": 4
+          },
+          "icon_image": "",
+          "icon_image_alt": "",
+          "is_acknowledged": false,
+          "scheduled_downtime_depth": 0,
+          "last_check": "2026-10-20T16:03:08+00:00",
+          "last_state_change": "2026-10-20T16:03:08+00:00",
+          "max_check_attempts": 5,
+          "output": "UNKNOWN - load not readable\n",
+          "state": 3,
+          "state_type": 0,
+          "criticality": null,
+          "status": {
+            "code": 3,
+            "name": "UNKNOWN",
+            "severity_code": 3
+          }
+        },
+        {
+          "duration": "1m 23s",
+          "id": 16,
+          "check_attempt": "1",
+          "description": "http",
+          "display_name": "http",
+          "host": {
+            "id": 10,
+            "name": "outside",
+            "alias": "Outside",
+            "display_name": "outside",
+            "state": 1
+          },
+          "icon_image": "",
+          "icon_image_alt": "",
+          "is_acknowledged": false,
+          "scheduled_downtime_depth": 1,
+          "last_check": "2026-10-20T16:04:53+00:00",
+          "last_state_change": "2026-10-20T16:03:53+00:00",
+          "max_check_attempts": 2,
+          "output": "CRITICAL - Socket timeout after 10 seconds\n",
+          "state": 2,
+          "state_type": 1,
+          "criticality": null,
+          "status": {
+            "code": 2,
+            "name": "CRITICAL",
+            "severity_code": 1
+          }
+        },
+        {
+          "duration": "1m 46s",
+          "id": 15,
+          "check_attempt": "1",
+          "description": "ping4",
+          "display_name": "ping4",
+          "host": {
+            "id": 9,
+            "name": "router",
+            "alias": "Router",
+            "display_name": "router",
+            "state": 0
+          },
+          "icon_image": "",
+          "icon_image_alt": "",
+          "is_acknowledged": false,
+          "scheduled_downtime_depth": 0,
+          "last_check": "2026-10-20T16:03:30+00:00",
+          "last_state_change": "2026-10-20T16:03:30+00:00",
+          "max_check_attempts": 5,
+          "output": "CRITICAL - Packet loss = 100%\n",
+          "state": 2,
+          "state_type": 0,
+          "criticality": null,
+          "status": {
+            "code": 2,
+            "name": "CRITICAL",
+            "severity_code": 1
+          }
+        }
+      ],
+      "meta": {
+        "page": 1,
+        "limit": 1000,
+        "search": {
+          "$and": {
+            "service.state": {
+              "$in": [1, 2, 3]
+            }
+          }
+        },
+        "sort_by": {},
+        "total": 7
+      }
+    }
+  },
+  "hosts_no_acl": {
+    "request": "GET /monitoring/hosts (user without any ACL resource)",
+    "status": 200,
+    "response": {
+      "result": [],
+      "meta": {
+        "page": 1,
+        "limit": 1000,
+        "search": {},
+        "sort_by": {},
+        "total": 0
+      }
+    }
+  },
+  "hosts_no_api": {
+    "request": "GET /monitoring/hosts (user without \"Reach API Realtime\")",
+    "status": 403,
+    "response": {
+      "code": 403,
+      "message": "You are not authorized to access this resource"
+    }
+  },
+  "invalid_token": {
+    "request": "GET /monitoring/hosts with an unknown or expired X-AUTH-TOKEN",
+    "status": 401,
+    "response": {
+      "message": "Invalid credentials."
+    }
+  },
+  "ack_host_not_found": {
+    "request": "POST /monitoring/hosts/999/acknowledgements",
+    "status": 404,
+    "response": {
+      "code": 404,
+      "message": "Host not found"
+    }
+  }
+}

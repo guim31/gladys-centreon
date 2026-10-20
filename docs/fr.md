@@ -1,67 +1,215 @@
-# Template de démonstration
+# Centreon
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+Votre supervision [Centreon](https://www.centreon.com/) dans Gladys : chaque
+hôte devient un appareil (UP, services WARNING, CRITICAL et UNKNOWN, problèmes
+non traités, acquitté, maintenance), un appareil « Centreon » résume
+l'ensemble, et vos scènes réagissent quand un hôte tombe ou qu'un service
+échoue — une lumière rouge quand le NAS tombe, un message quand une sauvegarde
+passe CRITICAL. Une scène peut aussi acquitter les problèmes d'un hôte, et un
+widget du tableau de bord liste les problèmes en cours.
 
-## Ce que vous obtenez
+L'intégration lit l'API REST v2 de Centreon (`/centreon/api/latest`) sur votre
+réseau local, avec un utilisateur Centreon dédié. Rien ne passe par un cloud.
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+Testé contre un vrai Centreon 24.10 (24.10.12, image Docker communautaire tout
+en un : checks de test forcés en WARNING, CRITICAL et UNKNOWN, un hôte DOWN, un
+hôte UNREACHABLE derrière lui, une maintenance, des acquittements, un hôte
+jamais vérifié, des utilisateurs sans les droits). Vos retours sont les
+bienvenus :
+[github.com/guim31/gladys-centreon/issues](https://github.com/guim31/gladys-centreon/issues).
 
-## Configuration
+## Ce qu'il vous faut
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+- Gladys Assistant 5.1.0 ou plus récent.
+- Centreon avec son API REST v2 (20.04 et plus récent ; seule la 24.10 a été
+  testée), son interface web joignable depuis la machine de Gladys (le plus
+  souvent `http://<adresse>/centreon`). Éditions Open Source, IT ou Business.
+- Un utilisateur Centreon pour Gladys, avec seulement les droits utiles.
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+## Mise en route
 
-## Actions
+### 1. Créer un utilisateur Centreon
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+Dans Centreon, en administrateur :
 
-## Scènes
+1. **Configuration > Utilisateurs > Contacts / Utilisateurs > Ajouter** : un
+   utilisateur `gladys`, non administrateur, avec un long mot de passe. Dans
+   l'onglet **Authentification Centreon**, passez **Reach API Realtime** à Oui
+   (l'API de configuration n'est pas nécessaire).
+2. **Administration > ACL > Accès aux ressources** : une ressource avec les
+   hôtes à suivre (ou tous les hôtes) et, si vous filtrez par groupes d'hôtes,
+   **ces groupes d'hôtes aussi** : un utilisateur ne voit un groupe d'hôtes que
+   si ses ressources le contiennent.
+3. **Administration > ACL > Accès aux actions** (pour acquitter depuis Gladys) :
+   un accès avec **Acquitter** pour les hôtes et pour les services.
+4. **Administration > ACL > Groupes d'accès** : un groupe avec l'utilisateur,
+   la ressource et l'accès aux actions.
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+Centreon calcule les ACL en moins d'une minute.
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+### 2. Configurer l'intégration
+
+Dans Gladys, ouvrez la configuration de l'intégration :
+
+- **Adresse** : l'adresse de l'interface web de Centreon, ex. `192.168.1.2`.
+  `http://` et `/centreon` sont ajoutés sauf si vous en saisissez d'autres
+  (ex. `https://supervision.example.com/centreon`). Une adresse copiée depuis
+  le navigateur convient aussi.
+- **Identifiant Centreon** et **Mot de passe** : l'utilisateur de l'étape 1.
+- **Groupes d'hôtes (facultatif)** : noms de groupes d'hôtes séparés par des
+  virgules, ex. `homelab, linux-servers` : un hôte de l'un d'eux est retenu.
+  Vide : tous les hôtes que l'utilisateur voit.
+- **Intervalle de rafraîchissement** : de 30 secondes à 5 minutes (1 minute par
+  défaut).
+- **Autoriser l'acquittement depuis les scènes** : décochez pour désactiver
+  l'action d'acquittement.
+- **Accepter les certificats auto-signés** : seulement pour une adresse
+  `https://` dont le certificat est auto-signé. Désactivé par défaut.
+- **Langue des noms** : langue des noms de fonctionnalités et des résultats de
+  scène.
+
+Enregistrez, puis cliquez sur **Tester la connexion** : vous obtenez la
+version de Centreon, le nombre d'hôtes, d'hôtes DOWN et de services en
+problème.
+
+### 3. Ajouter les appareils
+
+Ouvrez l'onglet **Découverte** de l'intégration et ajoutez les hôtes à suivre,
+et l'appareil « Centreon » si vous voulez les totaux. Les déclencheurs de scène
+valent pour tous les hôtes, ajoutés à Gladys ou non.
+
+## Les appareils
+
+Chaque **hôte** (nommé d'après son nom dans Centreon ; le renommer dans
+Centreon garde le même appareil) :
+
+| Fonctionnalité        | Valeur                                                             |
+| --------------------- | ------------------------------------------------------------------ |
+| Hôte UP               | 1 UP, 0 DOWN ou UNREACHABLE ; vide tant que l'hôte est PENDING     |
+| Services WARNING      | nombre de services WARNING                                         |
+| Services CRITICAL     | nombre de services CRITICAL                                        |
+| Services UNKNOWN      | nombre de services UNKNOWN                                         |
+| Problèmes non traités | problèmes de l'hôte et des services ni acquittés ni en maintenance |
+| Hôte acquitté         | 1 quand l'hôte est DOWN ou UNREACHABLE et son problème acquitté    |
+| En maintenance        | 1 pendant une plage de maintenance de l'hôte                       |
+
+L'appareil **Centreon** : Hôtes DOWN (DOWN ou UNREACHABLE), Services WARNING,
+Services CRITICAL, Services UNKNOWN et Problèmes non traités, sur les hôtes de
+la configuration.
+
+Un hôte est UNREACHABLE quand il est DOWN derrière un hôte parent tombé lui
+aussi. Les compteurs de services comptent les états que Centreon confirme
+encore (SOFT), comme le fait la vue Statut des ressources. Les valeurs ne sont
+envoyées à Gladys que lorsqu'elles changent, et toutes les 6 heures sinon.
 
 ## Tableau de bord
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+Le widget **Problèmes Centreon** montre trois tuiles — les hôtes DOWN, les
+services CRITICAL, les problèmes non traités — et les problèmes : hôtes DOWN,
+puis UNREACHABLE, puis services CRITICAL, UNKNOWN et WARNING, les plus récents
+d'abord. Chaque ligne donne le service et son état, l'hôte, ✓ une fois acquitté
+et ⏸ en maintenance. Dix lignes au plus. **Actualiser** relit Centreon. Dans
+ses réglages, choisissez des hôtes pour ne montrer que les leurs (vide : tous).
+
+## Scènes
+
+### Déclencheurs
+
+- **Un hôte tombe** : un hôte passe DOWN ou UNREACHABLE. Filtre : hôtes (vide :
+  n'importe lequel). Variables : nom de l'hôte, état (DOWN, UNREACHABLE). Un
+  hôte qui passe de DOWN à UNREACHABLE n'est pas annoncé deux fois.
+- **Un hôte revient** : un hôte annoncé tombé est de nouveau UP. Variables :
+  nom de l'hôte, durée en minutes.
+- **Un service pose problème** : un service passe WARNING, CRITICAL ou UNKNOWN,
+  ou change entre eux (de WARNING à CRITICAL, par exemple). Filtres : hôtes,
+  états (vide : tous ; pour « CRITICAL seulement », choisissez CRITICAL).
+  Variables : nom de l'hôte, service, état, sortie du check (sa première
+  ligne).
+- **Un service revient OK** : un service annoncé en problème est de nouveau
+  OK. Filtres : hôtes, dernier état de problème annoncé. Variables : nom de
+  l'hôte, service, dernier état de problème, durée en minutes.
+- **Centreon ne répond plus** : l'API REST ne répond pas deux fois de suite
+  (variables : adresse, erreur).
+
+Les problèmes déjà présents au démarrage de l'intégration ne sont pas
+annoncés, mais leur fin l'est. Seuls les états confirmés (HARD) comptent :
+tant que Centreon refait un check (état SOFT, jusqu'au « Nombre de
+contrôles avant validation de l'état »), rien n'est annoncé, comme Centreon ne
+notifie pas non plus. Un changement survenu pendant un redémarrage de Gladys
+ou de l'intégration est annoncé une fois à la lecture suivante. Un problème en
+maintenance (du service ou de son hôte) n'est pas annoncé ; s'il est toujours
+là à la fin de la maintenance, il l'est alors.
+
+### Actions
+
+- **Acquitter les problèmes d'un hôte** : acquitte dans Centreon le problème de
+  l'hôte (DOWN, UNREACHABLE) et chacun de ses services en problème pas encore
+  acquitté, avec un commentaire (vide : « Acquitté depuis Gladys »), au nom de
+  l'utilisateur de Gladys. L'acquittement est persistant (jusqu'au retour UP de
+  l'hôte ou OK du service), son commentaire est gardé, et il ne notifie
+  personne. Renvoie le nombre acquitté. Désactivable par « Autoriser
+  l'acquittement depuis les scènes ».
+- **Lire les problèmes** : compte et liste les problèmes d'un hôte, ou de tous,
+  pour les actions suivantes : nombre, non traités, hôtes DOWN, services
+  CRITICAL, WARNING et UNKNOWN, et la liste « hôte : problème ».
+
+### Idées de scènes
+
+- **Une lumière rouge quand le NAS tombe** : déclencheur « Un hôte tombe »,
+  hôte nas → passer la lampe du salon en rouge et envoyer
+  `{{triggerEvent.data.host}} : {{triggerEvent.data.state_name}}`.
+- **Seulement les services critiques** : déclencheur « Un service pose
+  problème », état CRITICAL → message `{{triggerEvent.data.host}} /
+{{triggerEvent.data.service}} : {{triggerEvent.data.output}}`.
+- **Bilan du matin** : chaque jour à 8 h, « Lire les problèmes » → envoyer le
+  nombre et la liste quand le nombre dépasse 0.
+- **Vu depuis le canapé** : un bouton du tableau de bord ou une télécommande
+  Zigbee lance « Acquitter les problèmes d'un hôte » sur le NAS.
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **« Identifiant ou mot de passe refusé par Centreon »** : vérifiez
+  l'utilisateur, son mot de passe, et qu'il est activé. Un utilisateur
+  authentifié seulement par LDAP ou SSO peut ne pas accéder à l'API : prenez
+  un utilisateur local.
+- **« Accès refusé : autorisez l'utilisateur à Reach API Realtime »** : étape
+  1.1.
+- **« Aucun hôte visible »** : l'utilisateur n'a pas de ressource ACL avec des
+  hôtes (étape 1.2), ou Centreon n'a pas encore calculé les ACL (attendez une
+  minute).
+- **« Groupes d'hôtes introuvables »** : vérifiez les noms, et ajoutez les
+  groupes d'hôtes à la ressource ACL de l'utilisateur (étape 1.2).
+- **« Centreon ne répond pas »** : vérifiez l'adresse depuis la machine de
+  Gladys. `localhost` désigne le conteneur de l'intégration lui-même : prenez
+  l'adresse IP de la machine de Centreon.
+- **« Pas d'API Centreon à cette adresse »** : autre chose y répond : saisissez
+  l'adresse de l'interface web, avec son chemin s'il n'est pas `/centreon`.
+- **« Ce Centreon redirige vers HTTPS »** : saisissez `https://` devant
+  l'adresse.
+- **« Certificat refusé »** : cochez « Accepter les certificats auto-signés ».
+- **Un hôte manque** : il n'est dans aucun des groupes d'hôtes de la
+  configuration, ou pas dans la ressource ACL de l'utilisateur.
+- **L'acquittement est refusé** : l'utilisateur a besoin des actions ACL
+  d'acquittement des hôtes et des services (étape 1.3).
+
+## Limites
+
+- Un seul Centreon par intégration (avec des serveurs distants et des
+  collecteurs, l'adresse du serveur central : il voit tous les hôtes).
+- États des hôtes et des services seulement : ni métriques, ni données de
+  performance, ni vues métier (BAM).
+- L'intégration lit Centreon à l'intervalle choisi : un événement qui va et
+  vient entre deux lectures est manqué.
+- « Un service revient OK » se déclenche aussi quand un service en problème est
+  retiré de la supervision ; un hôte retiré de Centreon ou du périmètre sort
+  sans bruit.
+- 30 événements de scène au plus par lecture : une panne réseau peut en lever
+  des dizaines d'un coup ; la suite part aux lectures suivantes.
+- Pas de quota sur l'API REST : chaque lecture envoie trois requêtes (une de
+  plus avec des groupes d'hôtes, une de plus chaque heure pour la version), et
+  se reconnecte quand Centreon clôt la session.
+- Un acquittement passe par la chaîne de commandes de Centreon (Gorgone) : si
+  elle est arrêtée, Centreon accepte l'acquittement mais il n'atteint jamais le
+  moteur.
+
+Sans lien avec la société Centreon.
