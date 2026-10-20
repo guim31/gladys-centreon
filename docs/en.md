@@ -1,61 +1,205 @@
-# Demo Devices Template
+# Centreon
 
-This is the user documentation of the integration. Gladys re-hosts this file
-and shows a permanent **Documentation** link to it in the Configuration screen
-(in the user's language, with English as the fallback) — it is when
-configuring that the user needs it most. Keep the short onboarding hints in
-the `section` blocks of the manifest `config_schema`; put the long
-step-by-step (screenshots, troubleshooting…) here.
+Bring your [Centreon](https://www.centreon.com/) monitoring into Gladys: each
+host becomes a device (up, services WARNING, CRITICAL and UNKNOWN, unhandled
+problems, acknowledged, downtime), a "Centreon" device sums up the whole
+setup, and your scenes react when a host goes down or a service fails — a red
+light when the NAS is down, a message when a backup is CRITICAL. A scene can
+also acknowledge the problems of a host, and a dashboard widget lists the
+problems in progress.
 
-## What you get
+The integration reads the REST API v2 of Centreon (`/centreon/api/latest`) on
+your local network, with a dedicated Centreon user. Nothing goes through a
+cloud.
 
-Six demo devices show up after installation: a weather station (real data
-from Open-Meteo), a switch, a dimmable light, a smart plug with power
-metering, a motion sensor and a camera.
+Tested against a real Centreon 24.10 (24.10.12, community all-in-one Docker
+image: test checks forced to WARNING, CRITICAL and UNKNOWN, a host DOWN, a host
+UNREACHABLE behind it, a downtime, acknowledgements, a host never checked,
+users without the rights). Feedback welcome:
+[github.com/guim31/gladys-centreon/issues](https://github.com/guim31/gladys-centreon/issues).
 
-## Configuration
+## What you need
 
-1. Open the **Configuration** tab of the integration.
-2. Set the **latitude** and **longitude** the demo weather station should
-   observe (they default to Paris), and pick your temperature unit.
-   The **refresh interval** sets how often the weather station and the
-   plug's power are read: every 5 minutes by default, every minute at most.
-3. Save: the devices appear in the **Discovery** tab, ready to be added.
+- Gladys Assistant 5.1.0 or later.
+- Centreon with its REST API v2 (only 24.10 was tested; 22.04 and later should work), its web interface
+  reachable from the Gladys machine (usually `http://<address>/centreon`).
+  Centreon Open Source, IT or Business editions alike.
+- A Centreon user for Gladys, with only the rights it needs.
 
-The **Prefer the local connection** toggle drives the demo plug: it reports
-the channel it actually uses as a badge (local or cloud), with an orange dot
-when it runs degraded (local refused, cloud fallback).
+## Getting started
 
-## Actions
+### 1. Create a Centreon user
 
-- **Test the weather provider** — performs a live request to Open-Meteo and
-  shows the current temperature and humidity under the button.
-- **Identify a device** — pick one of your devices in the list and it will
-  signal itself (the demo light "blinks" in the logs).
+In Centreon, as an administrator:
 
-## Scenes
+1. **Configuration > Users > Contacts / Users > Add**: a user `gladys`, not an
+   administrator, with a long password. In the **Centreon Authentication**
+   tab, set **Reach API Realtime** to Yes (Reach API Configuration is not
+   needed).
+2. **Administration > ACL > Resources Access**: a resource with the hosts to
+   follow (or all hosts) and, if you filter on host groups, **those host
+   groups too**: a user only sees a host group its resources hold.
+3. **Administration > ACL > Actions Access** (to acknowledge from Gladys): an
+   action access with **Acknowledge** for hosts and for services.
+4. **Administration > ACL > Access Groups**: a group with the user, the
+   resource and the action access.
 
-The integration adds its own cards to the scene editor (Gladys 5.1 or
-later), under the **Integrations** category:
+Centreon computes the ACL within a minute.
 
-- **Motion detected** (trigger) — starts the scene when a demo motion sensor
-  sees something move. Optionally pick the sensor and what moved (person,
-  animal); left empty, any detection matches. The following actions can
-  read what moved with `{{triggerEvent.data.target}}`.
-- **Identify a device** (action) — makes the chosen device signal itself.
-  It returns whether the device could signal itself, so the following
-  actions can depend on it.
+### 2. Configure the integration
+
+In Gladys, open the configuration of the integration:
+
+- **Address**: the address of the Centreon web interface, e.g. `192.168.1.2`.
+  `http://` and `/centreon` are added unless you type others (e.g.
+  `https://monitoring.example.com/centreon`). An address copied from the
+  browser works too.
+- **Centreon login** and **Password**: the user of step 1.
+- **Host groups (optional)**: names of host groups separated by commas, e.g.
+  `homelab, linux-servers`: a host in one of them is kept. Empty: every host
+  the user can see.
+- **Refresh interval**: 30 seconds to 5 minutes (1 minute by default).
+- **Allow acknowledging from scenes**: untick to turn the acknowledgement
+  action off.
+- **Accept self-signed certificates**: only for an `https://` address whose
+  certificate is self-signed. Off by default.
+- **Language of the names**: language of the feature names and of the scene
+  results.
+
+Save, then click **Test the connection**: it shows the Centreon version, the
+number of hosts, of hosts down and of services in problem.
+
+### 3. Add the devices
+
+Open the **Discover** tab of the integration and add the hosts to follow, and
+the "Centreon" device if you want the totals. The scene triggers work for
+every host, added to Gladys or not.
+
+## The devices
+
+Each **host** (named after its name in Centreon; renaming it in Centreon keeps
+the same device):
+
+| Feature            | Value                                                                |
+| ------------------ | -------------------------------------------------------------------- |
+| Host up            | 1 UP, 0 DOWN or UNREACHABLE; empty while the host is PENDING         |
+| Services WARNING   | number of services WARNING                                           |
+| Services CRITICAL  | number of services CRITICAL                                          |
+| Services UNKNOWN   | number of services UNKNOWN                                           |
+| Unhandled problems | host and service problems neither acknowledged nor in a downtime     |
+| Host acknowledged  | 1 while the host is DOWN or UNREACHABLE and its problem acknowledged |
+| In downtime        | 1 while the host is in a downtime                                    |
+
+The **Centreon** device: Hosts down (DOWN or UNREACHABLE), Services WARNING,
+Services CRITICAL, Services UNKNOWN and Unhandled problems, over the hosts of
+the configuration.
+
+A host is UNREACHABLE when it is DOWN behind a parent host that is down too.
+The service counts include the states Centreon is still confirming (SOFT), as
+Resource Status shows them. Values are sent to Gladys only when they change,
+and every 6 hours otherwise.
 
 ## Dashboard
 
-Add the **Demo status** widget to a dashboard: it shows the live
-temperature of the weather station and the power of the office plug, the
-connection the plug currently uses (orange when degraded) and the observed
-location. Its **Identify the light** button makes the demo light signal
-itself.
+The **Centreon problems** widget shows three tiles — the hosts down, the
+services CRITICAL, the unhandled problems — and the problems: hosts DOWN, then
+UNREACHABLE, then services CRITICAL, UNKNOWN and WARNING, the newest first.
+Each row gives the service and its state, the host, ✓ once acknowledged and ⏸
+in a downtime. Ten rows at most. **Refresh** reads Centreon again. In its
+settings, choose hosts to show only theirs (empty: every host).
+
+## Scenes
+
+### Triggers
+
+- **A host goes down**: a host goes DOWN or UNREACHABLE. Filter: hosts
+  (empty: any). Variables: host name, state (DOWN, UNREACHABLE). A host going
+  from DOWN to UNREACHABLE is not announced twice.
+- **A host is back up**: a host announced down is UP again. Variables: host
+  name, duration in minutes.
+- **A service has a problem**: a service enters WARNING, CRITICAL or UNKNOWN,
+  or changes between them (WARNING to CRITICAL, for example). Filters: hosts,
+  states (empty: any; for "CRITICAL only", choose CRITICAL). Variables: host
+  name, service, state, check output (its first line).
+- **A service is OK again**: a service announced in problem is OK again.
+  Filters: hosts, the last problem state announced. Variables: host name,
+  service, last problem state, duration in minutes.
+- **Centreon no longer answers**: the REST API fails to answer twice in a row
+  (variables: address, error).
+
+The problems already there when the integration starts are not announced,
+but their end is. Only confirmed (HARD) states count: while Centreon retries
+a check (SOFT state, up to the "Max check attempts"), nothing is announced, as
+Centreon does not notify either. A change that happens while Gladys or the
+integration restarts is announced once at the next read. A problem in a
+downtime (of the service or of its host) is not announced; one that is still
+there when the downtime ends is announced then.
+
+### Actions
+
+- **Acknowledge the problems of a host**: acknowledges in Centreon the host
+  problem (DOWN, UNREACHABLE) and each of its services in problem not
+  acknowledged yet, with a comment (empty: "Acknowledged from Gladys"), in the
+  name of the Gladys user. The acknowledgement is sticky (until the host is UP
+  or the service OK), persistent, and notifies no one. Returns the number
+  acknowledged. Turn it off with "Allow acknowledging from scenes".
+- **Read the problems**: counts and lists the problems of one host, or of all,
+  for the next actions: number, unhandled, hosts down, services CRITICAL,
+  WARNING and UNKNOWN, and the list "host: problem".
+
+### Scene ideas
+
+- **A red light when the NAS is down**: trigger "A host goes down", host nas →
+  turn the living-room lamp red and send
+  `{{triggerEvent.data.host}}: {{triggerEvent.data.state_name}}`.
+- **Critical services only**: trigger "A service has a problem", state
+  CRITICAL → message `{{triggerEvent.data.host}} / {{triggerEvent.data.service}}:
+{{triggerEvent.data.output}}`.
+- **Morning report**: every day at 8:00, "Read the problems" → send the count
+  and the list when the count is above 0.
+- **Seen from the couch**: a dashboard button or a Zigbee remote runs
+  "Acknowledge the problems of a host" on the NAS.
 
 ## Troubleshooting
 
-The integration logs everything it does: check the integration logs from the
-Gladys UI (or `docker logs` on the host) with `LOG_LEVEL=debug` for the full
-detail.
+- **"Login or password refused by Centreon"**: check the user and its
+  password, and that it is enabled. A user authenticated by LDAP or SSO only
+  may not log in to the API: use a local user.
+- **"Access refused: allow the user to Reach API Realtime"**: step 1.1.
+- **"No host visible"**: the user has no ACL resource with hosts (step 1.2),
+  or Centreon has not computed the ACL yet (wait a minute).
+- **"Host groups not found"**: check the names, and add the host groups to the
+  ACL resource of the user (step 1.2).
+- **"Centreon does not answer"**: check the address from the Gladys machine.
+  `localhost` is the integration container itself: use the IP address of the
+  Centreon machine.
+- **"No Centreon API at this address"**: something else answers there: type the
+  address of the web interface, with its path if it is not `/centreon`
+  (a Centreon at the root of its site: `https://<address>/api/latest`).
+- **"This Centreon redirects to HTTPS"**: type `https://` before the address.
+- **"Certificate refused"**: tick "Accept self-signed certificates".
+- **A host is missing**: it is in none of the host groups of the
+  configuration, or not in the ACL resource of the user.
+- **The acknowledgement is refused**: the user needs the ACL actions to
+  acknowledge hosts and services (step 1.3).
+
+## Limits
+
+- One Centreon per integration (with remote servers and pollers, the address
+  of the central server: it sees every host).
+- Host states and service states only: no metrics, no performance data, no
+  business views (BAM).
+- The integration reads Centreon at the chosen interval: an event that comes
+  and goes between two reads is missed.
+- "A service is OK again" also fires when a service in problem is removed from
+  monitoring; a host removed from Centreon or from the scope ends quietly.
+- At most 30 scene events per read: a network outage can raise dozens at once;
+  the rest follows at the next reads.
+- No quota on the REST API: each read sends two requests (one more with host
+  groups, one more once an hour for the version), and logs in again when
+  Centreon ends the session.
+- An acknowledgement goes through Centreon's own command chain (Gorgone): if
+  it is stopped, Centreon accepts the acknowledgement but it never reaches the
+  engine.
+
+Not affiliated with Centreon.
