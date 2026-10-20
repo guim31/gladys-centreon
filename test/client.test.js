@@ -202,6 +202,16 @@ test('errors: credentials, rights, no host, not Centreon, unreachable, TLS, http
     ERROR_KINDS.TLS,
   );
   await rejectsWith(
+    clientFor(centreon, { request: failing('EPROTO') }).snapshot(),
+    ERROR_KINDS.NOT_CENTREON,
+  );
+  await rejectsWith(
+    clientFor(centreon, {
+      request: async () => ({ status: 500, headers: {}, body: '<html>PHP Fatal error</html>' }),
+    }).snapshot(),
+    ERROR_KINDS.HTTP,
+  );
+  await rejectsWith(
     clientFor(centreon, { request: failing('ECONNRESET') }).snapshot(),
     ERROR_KINDS.UNREACHABLE,
   );
@@ -240,7 +250,9 @@ test('acknowledge: the host, then its services one by one, sticky and silent', a
     is_sticky: true,
     with_services: false,
   });
-  await rejectsWith(client.acknowledgeHost('999', 'Seen'), ERROR_KINDS.API);
+  // Deleted meanwhile: 404 "Host not found" / "Service not found", counted 0.
+  assert.equal(await client.acknowledgeHost('999', 'Seen'), 0);
+  assert.equal(await client.acknowledgeServices(hostId('nas'), ['999', ids[0]], 'Seen'), 1);
   // Without the ACL actions, Centreon answers 401 with an empty body.
   centreon.missing.add('ack');
   await rejectsWith(client.acknowledgeHost(hostId('outside'), 'Seen'), ERROR_KINDS.PERMISSION);

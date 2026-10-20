@@ -153,6 +153,10 @@ export class CentreonClient {
       if (TLS_CODES.has(err.code)) {
         throw new CentreonError(ERROR_KINDS.TLS, `Certificate refused (${err.code})`);
       }
+      if (err.code === 'EPROTO') {
+        // https:// on a port that speaks plain HTTP.
+        throw new CentreonError(ERROR_KINDS.NOT_CENTREON, 'TLS handshake failed (EPROTO)');
+      }
       if (!err.code) {
         // The server answers, but not as expected (an answer too large…).
         throw new CentreonError(ERROR_KINDS.HTTP, err.message);
@@ -187,7 +191,11 @@ export class CentreonClient {
     if (!parsed || typeof parsed !== 'object') {
       // The web page of another server, or a Centreon without this path.
       throw new CentreonError(
-        status === 401 ? ERROR_KINDS.AUTH : ERROR_KINDS.NOT_CENTREON,
+        status === 401
+          ? ERROR_KINDS.AUTH
+          : status >= 500
+            ? ERROR_KINDS.HTTP // a PHP error page of Centreon itself
+            : ERROR_KINDS.NOT_CENTREON,
         `Not a Centreon API answer (HTTP ${status})`,
         { status },
       );
@@ -290,7 +298,8 @@ export class CentreonClient {
       const answer = await this.call('/platform/versions');
       version = typeof answer?.web?.version === 'string' ? answer.web.version : '';
     } catch (err) {
-      if (err.kind !== ERROR_KINDS.PERMISSION && err.kind !== ERROR_KINDS.API) {
+      // An older Centreon without this route: the version stays unknown.
+      if (![ERROR_KINDS.PERMISSION, ERROR_KINDS.API, ERROR_KINDS.NOT_CENTREON].includes(err.kind)) {
         throw err;
       }
     }
@@ -412,11 +421,26 @@ export class CentreonClient {
    * @returns {Promise<number>} 1 once Centreon accepted it
    */
   async acknowledgeHost(hostId, comment) {
-    await this.call(`/monitoring/hosts/${encodeURIComponent(hostId)}/acknowledgements`, {
-      method: 'POST',
-      body: CentreonClient.ackBody(comment, { with_services: false }),
-    });
-    return 1;
+    return this.acknowledgeOne(
+      `/monitoring/hosts/${encodeURIComponent(hostId)}/acknowledgements`,
+      {
+        with_services: false,
+      },
+      comment,
+    );
+  }
+
+  /** One acknowledgement; 0 for an object deleted meanwhile (404 "… not found"). */
+  async acknowledgeOne(path, extra, comment) {
+    try {
+      await this.call(path, { method: 'POST', body: CentreonClient.ackBody(comment, extra) });
+      return 1;
+    } catch (err) {
+      if (err.kind === ERROR_KINDS.API && err.status === 404) {
+        return 0;
+      }
+      throw err;
+    }
   }
 
   /**
@@ -426,11 +450,11 @@ export class CentreonClient {
   async acknowledgeServices(hostId, serviceIds, comment) {
     let count = 0;
     for (const serviceId of serviceIds) {
-      await this.call(
+      count += await this.acknowledgeOne(
         `/monitoring/hosts/${encodeURIComponent(hostId)}/services/${encodeURIComponent(serviceId)}/acknowledgements`,
-        { method: 'POST', body: CentreonClient.ackBody(comment) },
+        {},
+        comment,
       );
-      count += 1;
     }
     return count;
   }

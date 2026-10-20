@@ -88,7 +88,7 @@ const scopeOf = (config) =>
     createHash('sha256').update(config.username).digest('hex').slice(0, 16),
   ]);
 
-/** Key of a service in the saved state (its object name, not its display name): a host name has no new line. */
+/** Key of a service in the saved state: host id and service id (a renaming changes neither). */
 export const serviceKey = (host, service) => `${host}\n${service}`;
 
 const minutesSince = (since, now) =>

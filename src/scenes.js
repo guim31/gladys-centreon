@@ -55,8 +55,9 @@ export const SCENE_ACTIONS = {
       0,
       MAX_COMMENT_LENGTH,
     );
-    // A problem that ended meanwhile is answered 409 ("is UP", "is OK") or
-    // not found: it counts for nothing, without error.
+    // A problem that ended meanwhile is accepted (204, the engine ignores
+    // it); a host or service deleted meanwhile is not found: it counts for
+    // nothing, without error (src/centreon/client.js).
     const tasks = [];
     if (isDown(host) && !host.acknowledged) {
       tasks.push(() => hub.client.acknowledgeHost(host.name, comment));
@@ -73,7 +74,9 @@ export const SCENE_ACTIONS = {
       try {
         acknowledged += await task();
       } catch (err) {
-        logger.warn(`Acknowledging the problems of ${host.name} failed: ${err.message}`);
+        logger.warn(
+          `Acknowledging the problems of ${hub.hostLabel(host.name)} failed: ${err.message}`,
+        );
         if (acknowledged > 0) {
           await hub.pollAll({ fresh: true });
         }
@@ -86,7 +89,7 @@ export const SCENE_ACTIONS = {
     if (tasks.length === 0) {
       return { acknowledged: 0 };
     }
-    logger.info(`${acknowledged} problem(s) of ${host.name} acknowledged`);
+    logger.info(`${acknowledged} problem(s) of ${hub.hostLabel(host.name)} acknowledged`);
     await hub.pollAll({ fresh: true });
     return { acknowledged };
   },

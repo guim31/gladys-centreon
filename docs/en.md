@@ -21,7 +21,7 @@ users without the rights). Feedback welcome:
 ## What you need
 
 - Gladys Assistant 5.1.0 or later.
-- Centreon with its REST API v2 (20.04 and later; only 24.10 was tested), its web interface
+- Centreon with its REST API v2 (only 24.10 was tested; 22.04 and later should work), its web interface
   reachable from the Gladys machine (usually `http://<address>/centreon`).
   Centreon Open Source, IT or Business editions alike.
 - A Centreon user for Gladys, with only the rights it needs.
@@ -174,7 +174,8 @@ there when the downtime ends is announced then.
   `localhost` is the integration container itself: use the IP address of the
   Centreon machine.
 - **"No Centreon API at this address"**: something else answers there: type the
-  address of the web interface, with its path if it is not `/centreon`.
+  address of the web interface, with its path if it is not `/centreon`
+  (a Centreon at the root of its site: `https://<address>/api/latest`).
 - **"This Centreon redirects to HTTPS"**: type `https://` before the address.
 - **"Certificate refused"**: tick "Accept self-signed certificates".
 - **A host is missing**: it is in none of the host groups of the
@@ -194,7 +195,7 @@ there when the downtime ends is announced then.
   monitoring; a host removed from Centreon or from the scope ends quietly.
 - At most 30 scene events per read: a network outage can raise dozens at once;
   the rest follows at the next reads.
-- No quota on the REST API: each read sends three requests (one more with host
+- No quota on the REST API: each read sends two requests (one more with host
   groups, one more once an hour for the version), and logs in again when
   Centreon ends the session.
 - An acknowledgement goes through Centreon's own command chain (Gorgone): if

@@ -23,7 +23,7 @@ willkommen:
 ## Was du brauchst
 
 - Gladys Assistant 5.1.0 oder neuer.
-- Centreon mit seiner REST-API v2 (ab 20.04; getestet wurde nur 24.10), seine
+- Centreon mit seiner REST-API v2 (getestet wurde nur 24.10; ab 22.04 sollte es gehen), seine
   Weboberfläche vom Gladys-Rechner aus erreichbar (meist
   `http://<Adresse>/centreon`). Editionen Open Source, IT oder Business.
 - Einen Centreon-Benutzer für Gladys, nur mit den nötigen Rechten.
@@ -184,7 +184,8 @@ wird nicht gemeldet; ist es am Ende der Wartungszeit noch da, dann schon.
   Centreon-Rechners.
 - **„Keine Centreon-API unter dieser Adresse“**: Dort antwortet etwas anderes:
   Gib die Adresse der Weboberfläche ein, mit ihrem Pfad, wenn er nicht
-  `/centreon` ist.
+  `/centreon` ist (ein Centreon im Wurzelverzeichnis seiner Site:
+  `https://<Adresse>/api/latest`).
 - **„Dieses Centreon leitet auf HTTPS um“**: Gib `https://` vor der Adresse
   ein.
 - **„Zertifikat abgelehnt“**: Aktiviere „Selbstsignierte Zertifikate
@@ -207,7 +208,7 @@ wird nicht gemeldet; ist es am Ende der Wartungszeit noch da, dann schon.
   Host endet still.
 - Höchstens 30 Szenen-Ereignisse pro Lesevorgang: Ein Netzwerkausfall kann
   Dutzende auf einmal auslösen; der Rest folgt bei den nächsten Lesevorgängen.
-- Kein Kontingent auf der REST-API: Jeder Lesevorgang sendet drei Anfragen
+- Kein Kontingent auf der REST-API: Jeder Lesevorgang sendet zwei Anfragen
   (eine mehr mit Hostgruppen, eine mehr einmal pro Stunde für die Version) und
   meldet sich neu an, wenn Centreon die Sitzung beendet.
 - Eine Quittierung läuft über die Befehlskette von Centreon (Gorgone): Ist sie

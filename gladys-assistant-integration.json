@@ -61,10 +61,10 @@
         "es": "Dirección"
       },
       "description": {
-        "en": "The address of the Centreon web interface; http:// and /centreon unless you type others.",
-        "fr": "L'adresse de l'interface web de Centreon ; http:// et /centreon sauf si vous en saisissez d'autres.",
-        "de": "Die Adresse der Weboberfläche von Centreon; http:// und /centreon, außer du gibst andere ein.",
-        "es": "La dirección de la interfaz web de Centreon; http:// y /centreon salvo que introduzca otros."
+        "en": "The address of the Centreon web interface; http:// and /centreon unless you type others (at the root of a site: …/api/latest).",
+        "fr": "L'adresse de l'interface web de Centreon ; http:// et /centreon sauf si vous en saisissez d'autres (à la racine d'un site : …/api/latest).",
+        "de": "Die Adresse der Weboberfläche von Centreon; http:// und /centreon, außer du gibst andere ein (im Wurzelverzeichnis einer Site: …/api/latest).",
+        "es": "La dirección de la interfaz web de Centreon; http:// y /centreon salvo que introduzca otros (en la raíz de un sitio: …/api/latest)."
       },
       "placeholder": {
         "en": "e.g. 192.168.1.2",
@@ -151,10 +151,10 @@
         "es": "Intervalo de actualización"
       },
       "description": {
-        "en": "How often Centreon is read: three or four API requests each time.",
-        "fr": "La fréquence de lecture de Centreon : trois ou quatre requêtes d'API à chaque fois.",
-        "de": "Wie oft Centreon gelesen wird: jedes Mal drei oder vier API-Anfragen.",
-        "es": "Con qué frecuencia se lee Centreon: tres o cuatro peticiones de API cada vez."
+        "en": "How often Centreon is read: two API requests each time (three with host groups).",
+        "fr": "La fréquence de lecture de Centreon : deux requêtes d'API à chaque fois (trois avec des groupes d'hôtes).",
+        "de": "Wie oft Centreon gelesen wird: jedes Mal zwei API-Anfragen (drei mit Hostgruppen).",
+        "es": "Con qué frecuencia se lee Centreon: dos peticiones de API cada vez (tres con grupos de hosts)."
       },
       "required": false,
       "default": "60",
@@ -312,7 +312,7 @@
         "es": "Un host cae"
       },
       "description": {
-        "en": "An Centreon host goes DOWN or UNREACHABLE, HARD state (outside a downtime).",
+        "en": "A Centreon host goes DOWN or UNREACHABLE, HARD state (outside a downtime).",
         "fr": "Un hôte Centreon passe DOWN ou UNREACHABLE, état HARD (hors maintenance).",
         "de": "Ein Centreon-Host wird DOWN oder UNREACHABLE, Zustand HARD (außerhalb einer Wartungszeit).",
         "es": "Un host de Centreon pasa a DOWN o UNREACHABLE, estado HARD (fuera de un mantenimiento)."
@@ -368,7 +368,7 @@
         "es": "Un host vuelve"
       },
       "description": {
-        "en": "An Centreon host announced down is UP again.",
+        "en": "A Centreon host announced down is UP again.",
         "fr": "Un hôte Centreon signalé tombé est de nouveau UP.",
         "de": "Ein als ausgefallen gemeldeter Centreon-Host ist wieder UP.",
         "es": "Un host de Centreon notificado como caído vuelve a estar UP."

@@ -21,7 +21,8 @@ bienvenidos:
 ## Lo que necesita
 
 - Gladys Assistant 5.1.0 o posterior.
-- Centreon con su API REST v2 (20.04 y posteriores; solo se probó la 24.10),
+- Centreon con su API REST v2 (solo se probó la 24.10; 22.04 y posteriores
+  deberían funcionar),
   su interfaz web accesible desde la máquina de Gladys (normalmente
   `http://<dirección>/centreon`). Ediciones Open Source, IT o Business.
 - Un usuario de Centreon para Gladys, solo con los derechos necesarios.
@@ -180,7 +181,8 @@ ahí al terminar el mantenimiento, se anuncia entonces.
   dirección IP de la máquina de Centreon.
 - **«No hay ninguna API de Centreon en esta dirección»**: responde otra cosa:
   introduzca la dirección de la interfaz web, con su ruta si no es
-  `/centreon`.
+  `/centreon` (un Centreon en la raíz de su sitio:
+  `https://<dirección>/api/latest`).
 - **«Este Centreon redirige a HTTPS»**: introduzca `https://` delante de la
   dirección.
 - **«Certificado rechazado»**: marque «Aceptar certificados autofirmados».
@@ -202,7 +204,7 @@ ahí al terminar el mantenimiento, se anuncia entonces.
   ámbito termina sin ruido.
 - Como máximo 30 eventos de escena por lectura: un corte de red puede generar
   decenas de golpe; el resto sigue en las lecturas siguientes.
-- Sin cuota en la API REST: cada lectura envía tres peticiones (una más con
+- Sin cuota en la API REST: cada lectura envía dos peticiones (una más con
   grupos de hosts, una más cada hora para la versión), y vuelve a iniciar
   sesión cuando Centreon cierra la sesión.
 - Un reconocimiento pasa por la cadena de comandos de Centreon (Gorgone): si

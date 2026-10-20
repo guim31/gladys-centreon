@@ -84,7 +84,7 @@ export const ERROR_TEXT = {
   },
   [ERROR_KINDS.PERMISSION]: {
     en: 'access refused: allow the user to "Reach API Realtime", see the documentation',
-    fr: "accès refusé : autorisez l'utilisateur à « Atteindre l'API temps réel », voir la documentation",
+    fr: "accès refusé : autorisez l'utilisateur à « Reach API Realtime », voir la documentation",
     de: 'Zugriff verweigert: Erlaube dem Benutzer „Reach API Realtime“, sieh in der Dokumentation nach',
     es: 'acceso denegado: permita al usuario «Reach API Realtime», consulte la documentación',
   },

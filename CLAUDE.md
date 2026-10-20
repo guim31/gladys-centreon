@@ -293,3 +293,20 @@ fichiers (`max_check_attempts` 2, et 5 pour garder un SOFT), `behindhost` enfant
 (UNREACHABLE), maintenance sur `outside` avec ses services, `newhost` sans check actif (PENDING).
 Utilisateurs non admin : complet, sans action d'acquittement, sans « Reach API Realtime », sans
 ressource ACL. Réponses gardées dans `test/fixtures/centreon/centreon-24.10.12.json`.
+
+Image de l'intégration avec les contraintes du bac à sable (`--cap-drop ALL --security-opt
+no-new-privileges --read-only --memory 256m --pids-limit 256`, volume `/data`, aucun port publié) :
+
+- Sans Gladys : reconnexion du SDK, pas de plantage, aucun secret dans les logs, ~20 Mo au repos,
+  arrêt propre sur SIGTERM (code 0).
+- Faux Gladys du SDK dans le conteneur verrouillé, contre le vrai Centreon : découverte (7
+  appareils, id Centreon dans l'`external_id`), états, « Tester la connexion », widget,
+  `get_problems`, filtre `homelab` ; `service_problem` seulement au passage HARD (rien en SOFT),
+  `service_recovered`, `host_up` ; acquittement de deux services (auteur, `sticky`,
+  `notify_contacts = 0`, `persistent_comment` relus en base), puis 0 au second appel ; mot de passe
+  refusé (`auth`), sans « Reach API Realtime » (`permission`), sans ACL (`no_hosts`), groupes
+  inconnus ou absents de l'ACL (`no_groups`), mauvais chemin (`not_centreon`), port fermé
+  (`unreachable`), `https://` sur le port HTTP (`EPROTO` → `not_centreon`), acquittement sans
+  l'action ACL (401 vide → message « actions ACL »).
+- Non vérifié en réel : Centreon avant 24.10, serveur distant, utilisateurs LDAP ou SSO, proxy
+  inverse, HTTPS réel (certificat auto-signé), expiration réelle de session (testée sur le faux).
